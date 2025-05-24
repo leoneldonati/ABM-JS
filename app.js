@@ -1,15 +1,16 @@
 import Store from "./store/index.js";
 
 const store = new Store(
-  { data: [], selectedEndpoint: "/todos" },
+  { data: [], selectedEndpoint: "/todos", quantity: 10 },
   { persist: false, name: "stored-state" }
 );
 
 const $avalibleEndpoints = document.querySelector("#avalible-endpoints");
 const $itemsGrid = document.querySelector("#items-grid");
+const $itemsCounter = document.querySelector("#items-counter");
+const $itemsHandler = document.querySelector("#more-items-button");
 const $error = document.querySelector("#error");
 const $loading = document.querySelector("#loading");
-
 const END_POINTS = [
   "/todos",
   "/posts",
@@ -18,6 +19,16 @@ const END_POINTS = [
   "/albums",
   "/comments",
 ];
+
+let scrollY = 0;
+$itemsHandler.addEventListener("click", () => {
+  scrollY = window.scrollY;
+  const { quantity } = store.get();
+
+  store.update({ quantity: quantity + 10 });
+
+  getData();
+});
 
 // Función para mostrar errores
 const showError = (message) => {
@@ -62,7 +73,6 @@ const paintCard = (item) => {
     if (item.email) content += `<p><strong>Email:</strong> ${item.email}</p>`;
     if (item.body) content += `<p><strong>Comment:</strong> ${item.body}</p>`;
   } else if (item.thumbnailUrl) {
-    console.log(item.thumbnailUrl);
     // Para /photos
     content += `<h3>${item.title || "Photo"}</h3>`;
     if (item.id) content += `<p><strong>ID:</strong> ${item.id}</p>`;
@@ -90,7 +100,7 @@ const updateButtonStyles = () => {
 
 // Función para obtener datos de la API
 const getData = async () => {
-  const selectedEndpoint = store.get().selectedEndpoint;
+  const { quantity, selectedEndpoint } = store.get();
   const API_URL = "https://jsonplaceholder.typicode.com";
 
   showLoading();
@@ -99,7 +109,7 @@ const getData = async () => {
     const res = await fetch(`${API_URL}${selectedEndpoint}`);
     if (!res.ok) throw new Error(`Error en la solicitud: ${res.status}`);
     const data = await res.json();
-    store.update({ data }); // Uso update para mantener selectedEndpoint
+    store.update({ data: data.slice(0, quantity) }); // Uso update para mantener selectedEndpoint
   } catch (e) {
     showError(`Error al obtener datos: ${e.message}`);
   }
@@ -126,6 +136,9 @@ store.subscribe((state) => {
   $loading.style.display = "none";
   if (Array.isArray(state?.data)) {
     state.data.forEach(paintCard);
+    $itemsCounter.innerText = state.data.length;
+
+    window.scrollTo({ top: scrollY });
   }
   updateButtonStyles();
 });
