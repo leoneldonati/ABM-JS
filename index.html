@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ABM JavaScript</title>
+    <link rel="stylesheet" href="/styles/index.css" />
+    <link rel="icon" type="xml+svg" href="/public/favicon.svg" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>ABM JavaScript</h1>
+    </header>
+    <nav>
+      <p>Selecciona el endpoint que quieres:</p>
+      <div id="avalible-endpoints"></div>
+    </nav>
+    <main>
+      <div id="items-grid" aria-live="polite"></div>
+      <div id="error" style="color: red; display: none"></div>
+      <div id="loading" style="display: none">Cargando...</div>
+    </main>
+  </body>
+</html>
