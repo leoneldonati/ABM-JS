@@ -1,47 +1,39 @@
+import { END_POINTS, getData } from "./api.js";
 import Store from "./store/index.js";
 
-const store = new Store(
-  { data: [], selectedEndpoint: "/todos", quantity: 10 },
-  { persist: false, name: "stored-state" }
-);
+const initialState = { data: [], selectedEndpoint: "/todos", quantity: 10 };
+export const store = new Store(initialState, {
+  persist: false,
+  name: "stored-state",
+});
 
 const $avalibleEndpoints = document.querySelector("#avalible-endpoints");
 const $itemsGrid = document.querySelector("#items-grid");
 const $itemsCounter = document.querySelector("#items-counter");
-const $itemsHandler = document.querySelector("#more-items-button");
 const $error = document.querySelector("#error");
 const $loading = document.querySelector("#loading");
-const END_POINTS = [
-  "/todos",
-  "/posts",
-  "/photos",
-  "/users",
-  "/albums",
-  "/comments",
-];
 
-let scrollY = 0;
-$itemsHandler.addEventListener("click", () => {
-  scrollY = window.scrollY;
-  const { quantity } = store.get();
-
-  store.update({ quantity: quantity + 10 });
-
-  getData();
-});
-
+const observer = new IntersectionObserver(
+  (entries) => {
+    if (entries[0].isIntersecting && $loading.style.display !== "block") {
+      const { quantity } = store.get();
+      store.update({ quantity: quantity + 10 });
+      getData(store, showLoading, showError);
+    }
+  },
+  { rootMargin: "100px" }
+);
 // Función para mostrar errores
-const showError = (message) => {
+export const showError = (message) => {
   $error.textContent = message;
   $error.style.display = "block";
   $loading.style.display = "none";
 };
 
 // Función para mostrar el indicador de carga
-const showLoading = () => {
+export const showLoading = () => {
   $error.style.display = "none";
   $loading.style.display = "block";
-  $itemsGrid.innerHTML = ""; // Limpiar el grid mientras se carga
 };
 
 // Función para pintar una tarjeta completa
@@ -98,32 +90,15 @@ const updateButtonStyles = () => {
   });
 };
 
-// Función para obtener datos de la API
-const getData = async () => {
-  const { quantity, selectedEndpoint } = store.get();
-  const API_URL = "https://jsonplaceholder.typicode.com";
-
-  showLoading();
-
-  try {
-    const res = await fetch(`${API_URL}${selectedEndpoint}`);
-    if (!res.ok) throw new Error(`Error en la solicitud: ${res.status}`);
-    const data = await res.json();
-    store.update({ data: data.slice(0, quantity) }); // Uso update para mantener selectedEndpoint
-  } catch (e) {
-    showError(`Error al obtener datos: ${e.message}`);
-  }
-};
-
-// Inicializar botones
 const initializeButtons = () => {
   END_POINTS.forEach((path) => {
     const button = document.createElement("button");
     button.textContent = path;
 
     button.addEventListener("click", () => {
-      store.update({ selectedEndpoint: path });
-      getData();
+      store.update({ selectedEndpoint: path, quantity: 10, data: [] }); // Resetear data y quantity
+      $itemsGrid.innerHTML = ""; // Limpiar el grid
+      getData(store, showLoading, showError);
     });
 
     $avalibleEndpoints.appendChild(button);
@@ -132,13 +107,24 @@ const initializeButtons = () => {
 
 // Suscribirse a cambios en el store
 store.subscribe((state) => {
-  $itemsGrid.innerHTML = "";
   $loading.style.display = "none";
   if (Array.isArray(state?.data)) {
-    state.data.forEach(paintCard);
+    const existingIds = new Set(
+      Array.from($itemsGrid.children).map((el) => el.getAttribute("aria-label"))
+    );
+    state.data.forEach((item) => {
+      if (!existingIds.has(`Item ${item.id || "sin ID"}`)) {
+        paintCard(item);
+      }
+    });
     $itemsCounter.innerText = state.data.length;
 
-    window.scrollTo({ top: scrollY });
+    // Observar el último elemento
+    const lastItem = $itemsGrid.lastElementChild;
+    if (lastItem) {
+      observer.disconnect(); // Desconectar observadores previos
+      observer.observe(lastItem);
+    }
   }
   updateButtonStyles();
 });
