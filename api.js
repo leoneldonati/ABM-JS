@@ -10,7 +10,7 @@ export const END_POINTS = [
 ];
 // Función para obtener datos de la API
 export const getData = async (retries = 3) => {
-  const { quantity, selectedEndpoint } = store.get();
+  const { quantity, selectedEndpoint, data } = store.get();
   const API_URL = "https://jsonplaceholder.typicode.com";
 
   showLoading();
@@ -18,8 +18,9 @@ export const getData = async (retries = 3) => {
   try {
     const res = await fetch(`${API_URL}${selectedEndpoint}`);
     if (!res.ok) throw new Error(`Error en la solicitud: ${res.status}`);
-    const data = await res.json();
-    store.update({ data: data.slice(0, quantity) });
+    const newData = await res.json();
+
+    store.update({ data: [...data, ...newData.slice(data.length, quantity)] });
   } catch (e) {
     if (retries > 0) {
       let timerId = 0;
