@@ -30,7 +30,8 @@ The state is managed using a custom `Store` class with optional persistence to `
 **Clone the Repository**:
 
 ```bash
-git clone <repository-url> cd abm-javascript
+git clone https://github.com/leoneldonati/ABM-JS.git
+cd abm-javascript
 ```
 
 2. **Set Up a Local Server**: Since the project uses ES Modules, you need a local server to avoid CORS issues.
