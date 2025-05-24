@@ -31,6 +31,8 @@ nav {
 }
 
 main {
+  max-width: 600px;
+  margin: 0 auto;
   display: grid;
   place-items: center;
 }
@@ -111,7 +113,8 @@ main {
   font-size: large;
   color: #007bff;
 }
-#more-items-button {
+#more-items-button,
+#add-item-button {
   background-color: #007bff;
   color: white;
   padding: 8px 16px;
